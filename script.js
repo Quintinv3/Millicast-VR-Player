@@ -1,5 +1,5 @@
 const PUBLISH_TOKEN =
-  "66b45a2202b9fa77c59653e2493cc5f32252c1cdba99eb3a28b1f1c3c8f9bf03";
+  "17a8d5ebf67802645a6a00de513465ae4c6efe9b2d6a024a6a4a938a1cf9db1c";
 var xhr = new XMLHttpRequest();
 xhr.open("POST", "https://director.millicast.com/api/director/publish", true);
 xhr.setRequestHeader("Authorization", `Bearer ${PUBLISH_TOKEN}`);
@@ -10,4 +10,4 @@ xhr.onreadystatechange = function () {
     console.log("Call Complete:", jsonData);
   }
 };
-xhr.send(JSON.stringify({ streamName: "ksi0861i" }));
+xhr.send(JSON.stringify({ streamName: "ksn523vd" }));
