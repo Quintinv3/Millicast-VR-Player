@@ -59,34 +59,27 @@ function connect() {
 
   console.log("connecting to: ", url + "?token=" + jwt); //token
   //connect with Websockets for handshake to media server.
-  let ws = new WebSocket(url + "?token=" + jwt);
+  ws = new WebSocket(url + "?token=" + jwt);
   ws.onopen = function () {
     //Connect to our media server via WebRTC
     console.log("ws::onopen");
-    //if this is supported
-    /* if (pc.addTransceiver) {
-          console.log('transceiver!');
-          //Create dummy stream
-          const stream = new MediaStream();
-          //Create all the receiver tracks
-          pc.addTransceiver("audio",{
-              direction       : "recvonly",
-                  streams         : [stream]
-          });
-          pc.addTransceiver("video",{
-              direction       : "recvonly",
-                  streams         : [stream]
-          });
-      } */
-
     //create a WebRTC offer to send to the media server
     let offer = pc
-      .createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
-      })
+      .createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
       .then((desc) => {
         console.log("createOffer Success!");
+        //support for stereo
+        desc.sdp = desc.sdp.replace(
+          "useinbandfec=1",
+          "useinbandfec=1; stereo=1"
+        );
+        //try for multiopus (surround sound) support
+        try {
+          desc.sdp = setMultiopus(desc);
+        } catch (e) {
+          console.log("create offer stereo", offer);
+        }
+
         //set local description and send offer to media server via ws.
         pc.setLocalDescription(desc)
           .then(() => {
@@ -108,13 +101,28 @@ function connect() {
           })
           .catch((e) => {
             console.log("setLocalDescription failed: ", e);
+            showMsg(e.status + ": " + e.data.message);
           });
       })
       .catch((e) => {
         console.log("createOffer Failed: ", e);
+        showMsg(e.status + ": " + e.data.message);
       });
   };
-
+  ws.onclose = function () {
+    console.log("WS onclose ", reconn);
+    if (reconn) {
+      ws = null;
+      if (!pc) {
+        setTimeout(connect(), 700);
+      } else {
+        console.log("close PC ", pc);
+        pc.close();
+        pc = null;
+        setTimeout(connect(), 700);
+      }
+    }
+  };
   ws.addEventListener("message", (evt) => {
     console.log("ws::message", evt);
     let msg = JSON.parse(evt.data);
@@ -228,6 +236,60 @@ function updateMillicastAuth() {
       })
     );
   });
+}
+//support for multiopus
+function setMultiopus(offer) {
+  ///// currently chrome only
+  let isChromium = window.chrome;
+  let winNav = window.navigator;
+  let vendorName = winNav.vendor;
+  let agent = winNav.userAgent.toLowerCase();
+  let isOpera = typeof window.opr !== "undefined";
+  let isIEedge = agent.indexOf("edge") > -1;
+  let isEdgium = agent.indexOf("edg") > -1;
+  let isIOSChrome = agent.match("crios");
+
+  let isChrome = false;
+  if (isIOSChrome) {
+  } else if (
+    isChromium !== null &&
+    typeof isChromium !== "undefined" &&
+    vendorName === "Google Inc." &&
+    isOpera === false &&
+    isIEedge === false &&
+    isEdgium === false
+  ) {
+    // is Google Chrome
+    isChrome = true;
+  }
+
+  console.log("isChrome: ", isChrome);
+  if (isChrome) {
+    // console.log('agent: ',navigator.userAgent);
+    //Find the audio m-line
+    const res = /m=audio 9 UDP\/TLS\/RTP\/SAVPF (.*)\r\n/.exec(offer.sdp);
+    //Get audio line
+    const audio = res[0];
+    //Get free payload number for multiopus
+    const pt = Math.max(...res[1].split(" ").map(Number)) + 1;
+    //Add multiopus
+    const multiopus =
+      audio.replace("\r\n", " ") +
+      pt +
+      "\r\n" +
+      "a=rtpmap:" +
+      pt +
+      " multiopus/48000/6\r\n" +
+      "a=fmtp:" +
+      pt +
+      " channel_mapping=0,4,1,2,3,5;coupled_streams=2;minptime=10;num_streams=4;useinbandfec=1\r\n";
+    //Change sdp
+    offer.sdp = offer.sdp.replace(audio, multiopus);
+    console.log("create multi-opus offer", offer);
+  } else {
+    console.log("no multi-opus support");
+  }
+  return offer.sdp;
 }
 
 let v = document.getElementsByTagName("player")[0];
