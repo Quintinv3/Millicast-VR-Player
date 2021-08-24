@@ -1,6 +1,6 @@
 let params = new URLSearchParams(document.location.search.substring(1));
 let accountId = params.get("ynUh7j");
-let streamName = params.get("ksi0861i");
+let streamName = params.get("id");
 console.log("Millicast Viewer Stream: ", streamName);
 
 //Millicast required info.
