@@ -1,11 +1,11 @@
 let params = new URLSearchParams(document.location.search.substring(1));
 let accountId = params.get("ynUh7j");
-let streamName = params.get("id");
+let streamName = params.get("ksi0861i");
 console.log("Millicast Viewer Stream: ", streamName);
 
 //Millicast required info.
-let url; // path to Millicast Server - Returned from API
-let jwt; //authorization token - Returned from API
+let url = "https://director.millicast.com/api/director/publish"; // path to Millicast Server - Returned from API
+let jwt = "66b45a2202b9fa77c59653e2493cc5f32252c1cdba99eb3a28b1f1c3c8f9bf03"; //authorization token - Returned from API
 
 const apiPath = "https://director.millicast.com/api/director/subscribe";
 const turnUrl = "https://turn.millicast.com/webrtc/_turn";
