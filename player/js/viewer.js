@@ -4,8 +4,8 @@ let streamName = params.get("ksi0861i");
 console.log("Millicast Viewer Stream: ", streamName);
 
 //Millicast required info.
-let url = "https://director.millicast.com/api/director/publish"; // path to Millicast Server - Returned from API
-let jwt = "7fbc967e98f45081bb467d7cb84d1887a6461bc92e5956fa302da2dbe0d3c878"; //authorization token - Returned from API
+let url; // path to Millicast Server - Returned from API
+let jwt; //authorization token - Returned from API
 
 const apiPath = "https://director.millicast.com/api/director/subscribe";
 const turnUrl = "https://turn.millicast.com/webrtc/_turn";
